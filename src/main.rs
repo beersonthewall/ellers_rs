@@ -2,7 +2,7 @@ use rand::random;
 use std::collections::HashMap;
 use std::collections::HashSet;
 
-#[derive(Hash, PartialEq, Eq, Debug)]
+#[derive(Hash, PartialEq, Eq, Debug, Clone)]
 enum Wall {
     Left,
     Right,
@@ -10,15 +10,15 @@ enum Wall {
     Bottom,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 struct Cell {
     walls: HashSet<Wall>,
     label: usize,
 }
 
 #[derive(Debug)]
-struct MazeState {
-    sets: HashMap<usize, Vec<usize>>,
+struct MazeBuilder {
+    sets: HashMap<usize, HashSet<usize>>,
     cells: HashMap<usize, usize>,
     width: usize,
     set_cnt: usize,
@@ -26,14 +26,17 @@ struct MazeState {
     row: Vec<Cell>,
 }
 
-impl MazeState {
+impl MazeBuilder {
+    fn ellers(&mut self) -> &Vec<Cell> {
+        let row = &mut self.row;
+        let new_row = row.clone();
 
-    fn ellers(&mut self) -> Vec<Cell> {
-        Vec::new()
+        self.row = new_row;
+        &self.row
     }
 
-    fn new(width: usize) -> MazeState {
-        let mut maze = MazeState {
+    fn new(width: usize) -> MazeBuilder {
+        let mut maze = MazeBuilder {
             sets: HashMap::new(),
             cells: HashMap::new(),
             width: width,
@@ -49,23 +52,57 @@ impl MazeState {
                 label: maze.label_cnt,
             });
 
-            maze.row.get_mut(maze.label_cnt).unwrap().walls.insert(Wall::Top);
-            let mut lst = maze.sets.entry(maze.set_cnt).or_insert(Vec::new());
-            lst.push(maze.label_cnt);
+            maze.row
+                .get_mut(maze.label_cnt)
+                .unwrap()
+                .walls
+                .insert(Wall::Top);
+            let set = maze.sets.entry(maze.set_cnt).or_insert(HashSet::new());
+            set.insert(maze.label_cnt);
             maze.cells.insert(maze.label_cnt, maze.set_cnt);
             maze.label_cnt += 1;
             maze.set_cnt += 1;
         }
 
         maze.row.get_mut(0).unwrap().walls.insert(Wall::Left);
-        maze.row.get_mut(width - 1).unwrap().walls.insert(Wall::Right);
+        maze.row
+            .get_mut(width - 1)
+            .unwrap()
+            .walls
+            .insert(Wall::Right);
+
+        // Randomly generate vertical walls.
+        for x in 1..width - 1 {
+            if random() {
+                maze.row[x].walls.insert(Wall::Right);
+                maze.row[x + 1].walls.insert(Wall::Left);
+            } else {
+                let l1 = maze.row[x].label;
+                let l2 = maze.row[x + 1].label;
+                let cells = &mut maze.cells;
+                let target_set = cells.get(&l1).unwrap();
+
+                // Add l2 to target set
+                if let Some(set) = maze.sets.get_mut(&target_set) {
+                    set.insert(l2);
+                }
+                if let Some(set_id) = cells.get(&l2) {
+                    // Remove l2 from previous set
+                    if let Some(set) = maze.sets.get_mut(&set_id) {
+                        set.remove(&l2);
+                    }
+                }
+                // Overwrite previous entry for l2.
+                cells.insert(l2, *target_set);
+            }
+        }
         maze
     }
 }
 
 fn main() {
-    let maze = MazeState::new(10);
-    println!("{:?}", maze);
+    let mut maze = MazeBuilder::new(10);
+    println!("{:?}", maze.row);
 }
 
 #[cfg(test)]
@@ -75,7 +112,7 @@ mod tests {
     #[test]
     fn new_maze_test() {
         const WIDTH: usize = 10;
-        let maze = MazeState::new(WIDTH);
+        let maze = MazeBuilder::new(WIDTH);
         assert_eq!(WIDTH, maze.set_cnt);
         assert_eq!(WIDTH, maze.label_cnt);
         assert_eq!(WIDTH, maze.row.len());
