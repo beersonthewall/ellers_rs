@@ -77,7 +77,9 @@ impl MazeBuilder {
         maze
     }
 
-    fn generate_bottom_walls(&mut self) {}
+    fn generate_bottom_walls(&mut self) {
+        
+    }
 
     fn generate_vertical_walls(&mut self) {
         // TODO may need to account for existing walls?
@@ -88,28 +90,28 @@ impl MazeBuilder {
             } else {
                 let l1 = self.row[x].label;
                 let l2 = self.row[x + 1].label;
-                let cells = &mut self.cells;
-                let target_set = cells.get(&l1).unwrap();
+
+                let target_set: usize = *self.cells.get(&l1).unwrap();
+                // Overwrite previous entry for l2.
+                self.cells.insert(l2, target_set);
 
                 // Add l2 to target set
                 if let Some(set) = self.sets.get_mut(&target_set) {
                     set.insert(l2);
                 }
-                if let Some(set_id) = cells.get(&l2) {
+                if let Some(set_id) = self.cells.get(&l2) {
                     // Remove l2 from previous set
                     if let Some(set) = self.sets.get_mut(&set_id) {
                         set.remove(&l2);
                     }
                 }
-                // Overwrite previous entry for l2.
-                cells.insert(l2, *target_set);
             }
         }
     }
 }
 
 fn main() {
-    let mut maze = MazeBuilder::new(10);
+    let maze = MazeBuilder::new(10);
     println!("{:?}", maze.row);
 }
 
