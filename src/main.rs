@@ -117,17 +117,6 @@ mod tests {
         assert_eq!(WIDTH, maze.label_cnt);
         assert_eq!(WIDTH, maze.row.len());
 
-        // Set to cell mapping
-        for i in 0..WIDTH {
-            assert_eq!(1, maze.sets.get(&i).unwrap().len());
-            assert_eq!(i, maze.sets.get(&i).unwrap()[0]);
-        }
-
-        // Cell to set mapping
-        for i in 0..WIDTH {
-            assert_eq!(i, *maze.cells.get(&i).unwrap());
-        }
-
         // Initial row
         assert!(maze.row[0].walls.contains(&Wall::Left));
         assert!(maze.row[0].walls.contains(&Wall::Top));
