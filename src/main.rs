@@ -71,24 +71,33 @@ impl MazeBuilder {
             .walls
             .insert(Wall::Right);
 
-        // Randomly generate vertical walls.
-        for x in 1..width - 1 {
+        maze.generate_vertical_walls();
+        maze.generate_bottom_walls();
+
+        maze
+    }
+
+    fn generate_bottom_walls(&mut self) {}
+
+    fn generate_vertical_walls(&mut self) {
+        // TODO may need to account for existing walls?
+        for x in 1..self.width - 1 {
             if random() {
-                maze.row[x].walls.insert(Wall::Right);
-                maze.row[x + 1].walls.insert(Wall::Left);
+                self.row[x].walls.insert(Wall::Right);
+                self.row[x + 1].walls.insert(Wall::Left);
             } else {
-                let l1 = maze.row[x].label;
-                let l2 = maze.row[x + 1].label;
-                let cells = &mut maze.cells;
+                let l1 = self.row[x].label;
+                let l2 = self.row[x + 1].label;
+                let cells = &mut self.cells;
                 let target_set = cells.get(&l1).unwrap();
 
                 // Add l2 to target set
-                if let Some(set) = maze.sets.get_mut(&target_set) {
+                if let Some(set) = self.sets.get_mut(&target_set) {
                     set.insert(l2);
                 }
                 if let Some(set_id) = cells.get(&l2) {
                     // Remove l2 from previous set
-                    if let Some(set) = maze.sets.get_mut(&set_id) {
+                    if let Some(set) = self.sets.get_mut(&set_id) {
                         set.remove(&l2);
                     }
                 }
@@ -96,7 +105,6 @@ impl MazeBuilder {
                 cells.insert(l2, *target_set);
             }
         }
-        maze
     }
 }
 
