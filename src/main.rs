@@ -33,14 +33,8 @@ impl MazeBuilder {
         let row = &mut self.row;
         let new_row = row.clone();
 
-        self.cleanup();
-
         self.row = new_row;
         &self.row
-    }
-
-    fn cleanup(&mut self) {
-        // TODO
     }
 
     fn new(width: usize) -> MazeBuilder {
@@ -94,13 +88,13 @@ impl MazeBuilder {
             .walls
             .insert(Wall::Right);
 
-        maze_bldr.generate_vertical_walls();
-        maze_bldr.generate_bottom_walls();
+        maze_bldr.init_vertical_walls();
+        maze_bldr.init_bottom_walls();
 
         maze_bldr
     }
 
-    fn generate_bottom_walls(&mut self) {
+    fn init_bottom_walls(&mut self) {
         for x in 1..self.width - 1 {
             if random() {
                 let label = self.row[x];
@@ -135,7 +129,7 @@ impl MazeBuilder {
         }
     }
 
-    fn generate_vertical_walls(&mut self) {
+    fn init_vertical_walls(&mut self) {
         for x in 0..self.width - 1 {
             if random() {
                 let current_label = self.row[x];
