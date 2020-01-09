@@ -28,12 +28,19 @@ struct MazeBuilder {
 }
 
 impl MazeBuilder {
+    #[allow(dead_code)]
     fn ellers(&mut self) -> &Vec<usize> {
         let row = &mut self.row;
         let new_row = row.clone();
 
+        self.cleanup();
+
         self.row = new_row;
         &self.row
+    }
+
+    fn cleanup(&mut self) {
+        // TODO
     }
 
     fn new(width: usize) -> MazeBuilder {
@@ -94,7 +101,6 @@ impl MazeBuilder {
     }
 
     fn generate_bottom_walls(&mut self) {
-        // TODO merge with generate vertical walls to avoid repeating
         for x in 1..self.width - 1 {
             if random() {
                 let label = self.row[x];
@@ -107,14 +113,30 @@ impl MazeBuilder {
             let label = self.row[x];
             let set_label = self.cells.get(&label).unwrap().set_id;
             if let Some(set) = self.set_to_cells.get(&set_label) {
-                for cell_label in set {}
+                let mut has_down_passage = false;
+                for cell_label in set {
+                    if !self
+                        .cells
+                        .get(&cell_label)
+                        .unwrap()
+                        .walls
+                        .contains(&Wall::Bottom)
+                    {
+                        has_down_passage = true;
+                        break;
+                    }
+                }
+                if !has_down_passage {
+                    if let Some(cell) = self.cells.get_mut(&label) {
+                        cell.walls.remove(&Wall::Bottom);
+                    }
+                }
             }
         }
     }
 
     fn generate_vertical_walls(&mut self) {
-        // TODO may need to account for existing walls?
-        for x in 1..self.width - 1 {
+        for x in 0..self.width - 1 {
             if random() {
                 let current_label = self.row[x];
                 let next_label = self.row[x + 1];
@@ -143,11 +165,67 @@ impl MazeBuilder {
             }
         }
     }
+
+    fn print_row(&self) {
+        let mut ceil = String::new();
+        let mut floor = String::new();
+        let mut vertical = String::new();
+
+        for label in self.row.iter() {
+            if let Some(cell) = self.cells.get(&label) {
+                if cell.walls.contains(&Wall::Top) {
+                    ceil.push('-');
+                    ceil.push('-');
+                    ceil.push('-');
+                } else {
+                    ceil.push(' ');
+                    ceil.push(' ');
+                    ceil.push(' ');
+                }
+
+                if cell.walls.contains(&Wall::Bottom) {
+                    floor.push('-');
+                    floor.push('-');
+                    floor.push('-');
+                } else {
+                    floor.push(' ');
+                    floor.push(' ');
+                    floor.push(' ');
+                }
+
+                if cell.walls.contains(&Wall::Left) && cell.walls.contains(&Wall::Right) {
+                    vertical.push('|');
+                    vertical.push_str(&cell.set_id.to_string());
+                    vertical.push('|');
+                } else if cell.walls.contains(&Wall::Right) {
+                    vertical.push(' ');
+                    vertical.push_str(&cell.set_id.to_string());
+                    vertical.push('|');
+                } else if cell.walls.contains(&Wall::Left) {
+                    vertical.push('|');
+                    vertical.push_str(&cell.set_id.to_string());
+                    vertical.push(' ');
+                } else {
+                    vertical.push(' ');
+                    vertical.push_str(&cell.set_id.to_string());
+                    vertical.push(' ');
+                }
+            }
+
+            vertical.push(' ');
+            ceil.push(' ');
+            floor.push(' ');
+        }
+
+        println!("{}", ceil);
+        println!("{}", vertical);
+        println!("{}", floor);
+    }
 }
 
 fn main() {
-    let maze = MazeBuilder::new(10);
-    println!("{:?}", maze.row);
+    let maze_bldr = MazeBuilder::new(10);
+    maze_bldr.print_row();
 }
 
 #[cfg(test)]
