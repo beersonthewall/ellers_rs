@@ -28,13 +28,12 @@ struct MazeBuilder {
 }
 
 impl MazeBuilder {
-    #[allow(dead_code)]
+
     fn ellers(&mut self) -> &Vec<usize> {
         let row = &mut self.row;
         let mut new_row = row.clone();
 
         for i in 0..new_row.len() {
-
             // Clone cell "above" new_row cell.
             new_row[i] = self.label_cnt;
             let mut new_cell = self.cells.get(&row[i]).unwrap().clone();
@@ -44,6 +43,21 @@ impl MazeBuilder {
             self.cells.insert(new_cell.label, new_cell);
             self.label_cnt += 1;
         }
+
+        // TODO: ( can probably refactor row copy to avoid extra work )
+        // 1) remove right walls.
+        // 2) if cell.walls.contains(Wall::Bottom) set_id = 0;
+        // 3) remove bottom walls
+        // 4) cells without a set get their own unique set
+        // 5) randomly add right walls, merging sets as appropriate (when not adding a wall)
+        //    If two adjacent cells are in the same set, we must add a wall
+        // 6) randomly add bottom walls, each set must have a down-passage
+
+
+        // TODO Completing the maze..
+        // 1) create a normal row, except each cell has a bottom wall
+        // 2) remove walls between cells that are members of different sets
+        //    union sets until all cells are members of the same set.
 
         self.row = new_row;
         &self.row
