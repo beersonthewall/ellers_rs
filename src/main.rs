@@ -31,7 +31,19 @@ impl MazeBuilder {
     #[allow(dead_code)]
     fn ellers(&mut self) -> &Vec<usize> {
         let row = &mut self.row;
-        let new_row = row.clone();
+        let mut new_row = row.clone();
+
+        for i in 0..new_row.len() {
+
+            // Clone cell "above" new_row cell.
+            new_row[i] = self.label_cnt;
+            let mut new_cell = self.cells.get(&row[i]).unwrap().clone();
+            new_cell.label = self.label_cnt;
+            let set = self.set_to_cells.entry(new_cell.set_id).or_insert(HashSet::new());
+            set.insert(self.label_cnt);
+            self.cells.insert(new_cell.label, new_cell);
+            self.label_cnt += 1;
+        }
 
         self.row = new_row;
         &self.row
@@ -218,17 +230,35 @@ impl MazeBuilder {
 }
 
 fn main() {
-    let maze_bldr = MazeBuilder::new(10);
+    let mut maze_bldr = MazeBuilder::new(10);
     maze_bldr.print_row();
+    for i in &maze_bldr.row {
+        if let Some(cell) = maze_bldr.cells.get(&i) {
+            print!("{}, ", cell.label);
+        }
+    }
+
+    println!("");
+    maze_bldr.ellers();
+    maze_bldr.print_row();
+
+    println!("");
+    for i in &maze_bldr.row {
+        if let Some(cell) = maze_bldr.cells.get(&i) {
+            print!("{}, ", cell.label);
+        }
+    }
+    println!("");
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
 
+    const WIDTH: usize = 10;
+
     #[test]
     fn new_maze_test() {
-        const WIDTH: usize = 10;
         let maze = MazeBuilder::new(WIDTH);
         assert_eq!(WIDTH, maze.set_cnt);
         assert_eq!(WIDTH, maze.label_cnt);
@@ -244,5 +274,22 @@ mod tests {
 
         assert!(maze.cells[&(WIDTH - 1)].walls.contains(&Wall::Top));
         assert!(maze.cells[&(WIDTH - 1)].walls.contains(&Wall::Right));
+    }
+
+    #[test]
+    fn test_copy_row() {
+        let maze_bldr = &mut MazeBuilder::new(WIDTH);
+        let fst_row = maze_bldr.row.clone();
+        let snd_row = maze_bldr.ellers();
+
+        assert_eq!(fst_row.len(), snd_row.len());
+
+        for i in 0..WIDTH {
+            let fst_row_cell = maze_bldr.cells.get(&i).unwrap();
+            let snd_row_cell = maze_bldr.cells.get(&i).unwrap();
+
+            assert_eq!(fst_row_cell.set_id, snd_row_cell.set_id);
+            assert_eq!(fst_row_cell.walls, snd_row_cell.walls);
+        }
     }
 }
