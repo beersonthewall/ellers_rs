@@ -44,6 +44,7 @@ impl MazeBuilder {
     ///    union sets until all cells are members of the same set.
     ///
     /// Returns a vector of cell labels.
+    // TODO generate bottom rows with a guaranteed down path for new rows
     fn ellers(&mut self) -> &Vec<usize> {
         let row = &mut self.row;
         let mut new_row = row.clone();
@@ -53,21 +54,22 @@ impl MazeBuilder {
             new_row[i] = self.label_cnt;
             let mut new_cell = self.cells.get(&row[i]).unwrap().clone();
             new_cell.label = self.label_cnt;
+
             let set = self
                 .set_to_cells
                 .entry(new_cell.set_id)
                 .or_insert(HashSet::new());
             set.insert(self.label_cnt);
             self.cells.insert(new_cell.label, new_cell);
-            self.label_cnt += 1;
-        }
 
-        for i in &new_row {
-            if let Some(cell) = self.cells.get_mut(i) {
+            if let Some(cell) = self.cells.get_mut(&self.label_cnt) {
+                cell.walls.remove(&Wall::Top);
                 cell.walls.remove(&Wall::Right);
                 cell.walls.remove(&Wall::Left);
 
                 if cell.walls.remove(&Wall::Bottom) {
+                    cell.walls.insert(Wall::Top);
+
                     let old_set = self
                         .set_to_cells
                         .entry(cell.set_id)
@@ -84,6 +86,8 @@ impl MazeBuilder {
                     set.insert(cell.label);
                 }
             }
+
+            self.label_cnt += 1;
         }
 
         let mut iter = new_row.iter().peekable();
