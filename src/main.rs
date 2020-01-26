@@ -28,7 +28,22 @@ struct MazeBuilder {
 }
 
 impl MazeBuilder {
+    /// Eller's algorithm:
+    /// Copy Previous row to next_row
+    /// 1) remove right walls.
+    /// 2) if cell.walls.contains(Wall::Bottom) set_id = 0;
+    /// 3) remove bottom walls
+    /// 4) cells without a set get their own unique set
+    /// 5) randomly add right walls, merging sets as appropriate (when not adding a wall)
+    ///    If two adjacent cells are in the same set, we must add a wall
+    /// 6) randomly add bottom walls, each set must have a down-passage
 
+    /// Completing the maze.
+    /// 1) create a normal row, except each cell has a bottom wall
+    /// 2) remove walls between cells that are members of different sets
+    ///    union sets until all cells are members of the same set.
+    ///
+    /// Returns a vector of cell labels.
     fn ellers(&mut self) -> &Vec<usize> {
         let row = &mut self.row;
         let mut new_row = row.clone();
@@ -38,26 +53,88 @@ impl MazeBuilder {
             new_row[i] = self.label_cnt;
             let mut new_cell = self.cells.get(&row[i]).unwrap().clone();
             new_cell.label = self.label_cnt;
-            let set = self.set_to_cells.entry(new_cell.set_id).or_insert(HashSet::new());
+            let set = self
+                .set_to_cells
+                .entry(new_cell.set_id)
+                .or_insert(HashSet::new());
             set.insert(self.label_cnt);
             self.cells.insert(new_cell.label, new_cell);
             self.label_cnt += 1;
         }
 
-        // TODO: ( can probably refactor row copy to avoid extra work )
-        // 1) remove right walls.
-        // 2) if cell.walls.contains(Wall::Bottom) set_id = 0;
-        // 3) remove bottom walls
-        // 4) cells without a set get their own unique set
-        // 5) randomly add right walls, merging sets as appropriate (when not adding a wall)
-        //    If two adjacent cells are in the same set, we must add a wall
-        // 6) randomly add bottom walls, each set must have a down-passage
+        for i in &new_row {
+            if let Some(cell) = self.cells.get_mut(i) {
+                cell.walls.remove(&Wall::Right);
+                cell.walls.remove(&Wall::Left);
 
+                if cell.walls.remove(&Wall::Bottom) {
+                    let old_set = self
+                        .set_to_cells
+                        .entry(cell.set_id)
+                        .or_insert(HashSet::new());
+                    old_set.remove(&cell.label);
 
-        // TODO Completing the maze..
-        // 1) create a normal row, except each cell has a bottom wall
-        // 2) remove walls between cells that are members of different sets
-        //    union sets until all cells are members of the same set.
+                    cell.set_id = self.set_cnt;
+                    self.set_cnt += 1;
+
+                    let set = self
+                        .set_to_cells
+                        .entry(cell.set_id)
+                        .or_insert(HashSet::new());
+                    set.insert(cell.label);
+                }
+            }
+        }
+
+        let mut iter = new_row.iter().peekable();
+        while let Some(i) = iter.next() {
+            let cells = &mut self.cells;
+            let sets = &mut self.set_to_cells;
+
+            let mut merge: bool = false;
+            let mut add_left: bool = false;
+            if let Some(cell) = cells.get_mut(&i) {
+                if random() {
+                    cell.walls.insert(Wall::Right);
+                    add_left = true;
+                } else {
+                    merge = true;
+                }
+            }
+
+            if let Some(next_cell_label) = iter.peek() {
+                let current_set_id = match cells.get(&i) {
+                    Some(cell) => cell.set_id,
+                    None => 0,
+                };
+
+                // Use flags to avoid two mutable references.
+                if merge && current_set_id != 0 {
+                    let next_cell = cells.get_mut(&next_cell_label).unwrap();
+                    if let Some(old_set) = sets.get_mut(&next_cell.set_id) {
+                        old_set.remove(&next_cell.label);
+                    }
+                    next_cell.set_id = current_set_id;
+                    if let Some(new_set) = sets.get_mut(&current_set_id) {
+                        new_set.insert(next_cell.label);
+                    }
+                }
+
+                if add_left {
+                    if let Some(cell) = cells.get_mut(&next_cell_label) {
+                        cell.walls.insert(Wall::Left);
+                    }
+                }
+            }
+        }
+
+        // Make sure outside edges have walls.
+        if let Some(cell) = self.cells.get_mut(&new_row[0]) {
+            cell.walls.insert(Wall::Left);
+        }
+        if let Some(cell) = self.cells.get_mut(&new_row[new_row.len() - 1]) {
+            cell.walls.insert(Wall::Right);
+        }
 
         self.row = new_row;
         &self.row
@@ -68,7 +145,7 @@ impl MazeBuilder {
             set_to_cells: HashMap::new(),
             cells: HashMap::new(),
             width: width,
-            set_cnt: 0,
+            set_cnt: 1,
             label_cnt: 0,
             row: Vec::new(),
         };
@@ -274,7 +351,7 @@ mod tests {
     #[test]
     fn new_maze_test() {
         let maze = MazeBuilder::new(WIDTH);
-        assert_eq!(WIDTH, maze.set_cnt);
+        assert_eq!(WIDTH + 1, maze.set_cnt);
         assert_eq!(WIDTH, maze.label_cnt);
         assert_eq!(WIDTH, maze.row.len());
 
