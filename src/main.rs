@@ -45,6 +45,7 @@ impl MazeBuilder {
     ///
     /// Returns a vector of cell labels.
     // TODO generate bottom rows with a guaranteed down path for new rows
+    // TODO when generating new walls, split cells in same set with a wall to avoid cycles
     fn ellers(&mut self) -> &Vec<usize> {
         let row = &mut self.row;
         let mut new_row = row.clone();
