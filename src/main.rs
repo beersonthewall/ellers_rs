@@ -19,7 +19,7 @@ struct Cell {
 
 #[derive(Debug)]
 struct MazeBuilder {
-    set_to_cells: HashMap<usize, HashSet<usize>>,
+    sets: HashMap<usize, HashSet<usize>>,
     cells: HashMap<usize, Cell>,
     width: usize,
     set_cnt: usize,
@@ -58,7 +58,7 @@ impl MazeBuilder {
             new_cell.label = self.label_cnt;
 
             let set = self
-                .set_to_cells
+                .sets
                 .entry(new_cell.set_id)
                 .or_insert(HashSet::new());
             set.insert(self.label_cnt);
@@ -73,7 +73,7 @@ impl MazeBuilder {
                     cell.walls.insert(Wall::Top);
 
                     let old_set = self
-                        .set_to_cells
+                        .sets
                         .entry(cell.set_id)
                         .or_insert(HashSet::new());
                     old_set.remove(&cell.label);
@@ -82,7 +82,7 @@ impl MazeBuilder {
                     self.set_cnt += 1;
 
                     let set = self
-                        .set_to_cells
+                        .sets
                         .entry(cell.set_id)
                         .or_insert(HashSet::new());
                     set.insert(cell.label);
@@ -95,7 +95,7 @@ impl MazeBuilder {
         let mut iter = new_row.iter().peekable();
         while let Some(i) = iter.next() {
             let cells = &mut self.cells;
-            let sets = &mut self.set_to_cells;
+            let sets = &mut self.sets;
 
             let mut merge: bool = false;
             let mut add_left: bool = false;
@@ -150,7 +150,7 @@ impl MazeBuilder {
 
     fn new(width: usize) -> MazeBuilder {
         let mut maze_bldr = MazeBuilder {
-            set_to_cells: HashMap::new(),
+            sets: HashMap::new(),
             cells: HashMap::new(),
             width: width,
             set_cnt: 1,
@@ -177,7 +177,7 @@ impl MazeBuilder {
                 .walls
                 .insert(Wall::Top);
             let set = maze_bldr
-                .set_to_cells
+                .sets
                 .entry(maze_bldr.set_cnt)
                 .or_insert(HashSet::new());
             set.insert(maze_bldr.label_cnt);
@@ -217,7 +217,7 @@ impl MazeBuilder {
         for x in 1..self.width - 1 {
             let label = self.row[x];
             let set_label = self.cells.get(&label).unwrap().set_id;
-            if let Some(set) = self.set_to_cells.get(&set_label) {
+            if let Some(set) = self.sets.get(&set_label) {
                 let mut has_down_passage = false;
                 for cell_label in set {
                     if !self
@@ -258,12 +258,12 @@ impl MazeBuilder {
                 let l2_cell = self.cells.get_mut(&l2).unwrap();
                 l2_cell.set_id = target_set;
 
-                if let Some(set) = self.set_to_cells.get_mut(&target_set) {
+                if let Some(set) = self.sets.get_mut(&target_set) {
                     set.insert(l2);
                 }
                 if let Some(cell) = self.cells.get(&l2) {
                     // Remove l2 from previous set
-                    if let Some(set) = self.set_to_cells.get_mut(&cell.set_id) {
+                    if let Some(set) = self.sets.get_mut(&cell.set_id) {
                         set.remove(&l2);
                     }
                 }
