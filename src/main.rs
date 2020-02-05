@@ -45,7 +45,6 @@ impl MazeBuilder {
     ///
     /// Returns a vector of cell labels.
     // TODO generate bottom rows with a guaranteed down path for new rows
-    // TODO when generating new walls, split cells in same set with a wall to avoid cycles
     // TODO create end() method to generate last row.
     fn ellers(&mut self) -> &Vec<usize> {
         let row = &mut self.row;
@@ -99,8 +98,20 @@ impl MazeBuilder {
 
             let mut merge: bool = false;
             let mut add_left: bool = false;
+            let mut next_set = 0;
+
+            // Get next set
+            if let Some(next_label) = iter.peek() {
+                if let Some(next_cell) = cells.get_mut(next_label) {
+                    next_set = next_cell.set_id;
+                }
+            }
+
             if let Some(cell) = cells.get_mut(&i) {
                 if random() {
+                    cell.walls.insert(Wall::Right);
+                    add_left = true;
+                } else if next_set != 0 && next_set == cell.set_id {
                     cell.walls.insert(Wall::Right);
                     add_left = true;
                 } else {
@@ -108,7 +119,7 @@ impl MazeBuilder {
                 }
             }
 
-            if let Some(next_cell_label) = iter.peek() {
+            if let Some(next_label) = iter.peek() {
                 let current_set_id = match cells.get(&i) {
                     Some(cell) => cell.set_id,
                     None => 0,
@@ -116,7 +127,7 @@ impl MazeBuilder {
 
                 // Use flags to avoid two mutable references.
                 if merge && current_set_id != 0 {
-                    let next_cell = cells.get_mut(&next_cell_label).unwrap();
+                    let next_cell = cells.get_mut(&next_label).unwrap();
                     if let Some(old_set) = sets.get_mut(&next_cell.set_id) {
                         old_set.remove(&next_cell.label);
                     }
@@ -127,7 +138,7 @@ impl MazeBuilder {
                 }
 
                 if add_left {
-                    if let Some(cell) = cells.get_mut(&next_cell_label) {
+                    if let Some(cell) = cells.get_mut(&next_label) {
                         cell.walls.insert(Wall::Left);
                     }
                 }
