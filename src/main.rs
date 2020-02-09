@@ -56,10 +56,7 @@ impl MazeBuilder {
             let mut new_cell = self.cells.get(&row[i]).unwrap().clone();
             new_cell.label = self.label_cnt;
 
-            let set = self
-                .sets
-                .entry(new_cell.set_id)
-                .or_insert(HashSet::new());
+            let set = self.sets.entry(new_cell.set_id).or_insert(HashSet::new());
             set.insert(self.label_cnt);
             self.cells.insert(new_cell.label, new_cell);
 
@@ -71,19 +68,13 @@ impl MazeBuilder {
                 if cell.walls.remove(&Wall::Bottom) {
                     cell.walls.insert(Wall::Top);
 
-                    let old_set = self
-                        .sets
-                        .entry(cell.set_id)
-                        .or_insert(HashSet::new());
+                    let old_set = self.sets.entry(cell.set_id).or_insert(HashSet::new());
                     old_set.remove(&cell.label);
 
                     cell.set_id = self.set_cnt;
                     self.set_cnt += 1;
 
-                    let set = self
-                        .sets
-                        .entry(cell.set_id)
-                        .or_insert(HashSet::new());
+                    let set = self.sets.entry(cell.set_id).or_insert(HashSet::new());
                     set.insert(cell.label);
                 }
             }
@@ -108,10 +99,10 @@ impl MazeBuilder {
             }
 
             if let Some(cell) = cells.get_mut(&i) {
-                if random() {
+                if next_set != 0 && next_set == cell.set_id {
                     cell.walls.insert(Wall::Right);
                     add_left = true;
-                } else if next_set != 0 && next_set == cell.set_id {
+                } else if random() {
                     cell.walls.insert(Wall::Right);
                     add_left = true;
                 } else {
