@@ -44,7 +44,6 @@ impl MazeBuilder {
     ///    union sets until all cells are members of the same set.
     ///
     /// Returns a vector of cell labels.
-    // TODO create end() method to generate last row.
     fn ellers(&mut self) -> &Vec<usize> {
         let row = &mut self.row;
         let mut new_row = row.clone();
@@ -160,6 +159,57 @@ impl MazeBuilder {
         self.row = new_row;
         self.init_bottom_walls();
         &self.row
+    }
+
+    fn end(&mut self) {
+        self.ellers();
+        for i in &self.row {
+            if let Some(cell) = self.cells.get_mut(i) {
+                cell.walls.insert(Wall::Bottom);
+            }
+        }
+
+        let mut iter = self.row.iter().peekable();
+        while let Some(label) = iter.next() {
+            let mut set_id = 0;
+            if let Some(next_label) = iter.peek() {
+                if let Some(next_cell) = self.cells.get(next_label) {
+                    set_id = next_cell.set_id;
+                }
+            }
+
+            let mut union = true;
+            let mut target_set = 0;
+            if set_id != 0 {
+                if let Some(cell) = self.cells.get_mut(label) {
+                    if set_id != cell.set_id {
+                        union = true;
+                        target_set = cell.set_id;
+                        cell.walls.remove(&Wall::Right);
+                    }
+                }
+            }
+
+            if union {
+                if let Some(next_label) = iter.peek() {
+                    if let Some(next_cell) = self.cells.get_mut(next_label) {
+                        next_cell.walls.remove(&Wall::Left);
+                    }
+                }
+
+                let mut source = Vec::new();
+                if let Some(source_set) = self.sets.get(&set_id) {
+                    for i in source_set {
+                        source.push(*i);
+                    }
+                }
+                if let Some(target_set) = self.sets.get_mut(&target_set) {
+                    for i in source {
+                        target_set.insert(i);
+                    }
+                }
+            }
+        }
     }
 
     fn new(width: usize) -> MazeBuilder {
@@ -345,23 +395,12 @@ impl MazeBuilder {
 fn main() {
     let mut maze_bldr = MazeBuilder::new(10);
     maze_bldr.print_row();
-    for i in &maze_bldr.row {
-        if let Some(cell) = maze_bldr.cells.get(&i) {
-            print!("{}, ", cell.label);
-        }
-    }
 
-    println!("");
     maze_bldr.ellers();
     maze_bldr.print_row();
 
-    println!("");
-    for i in &maze_bldr.row {
-        if let Some(cell) = maze_bldr.cells.get(&i) {
-            print!("{}, ", cell.label);
-        }
-    }
-    println!("");
+    maze_bldr.end();
+    maze_bldr.print_row();
 }
 
 #[cfg(test)]
