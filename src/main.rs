@@ -44,7 +44,6 @@ impl MazeBuilder {
     ///    union sets until all cells are members of the same set.
     ///
     /// Returns a vector of cell labels.
-    // TODO generate bottom rows with a guaranteed down path for new rows
     // TODO create end() method to generate last row.
     fn ellers(&mut self) -> &Vec<usize> {
         let row = &mut self.row;
@@ -144,9 +143,22 @@ impl MazeBuilder {
             cell.walls.insert(Wall::Right);
         }
 
-        // TODO Need to adjust sets for cells that are about to be dropped.
+        // Remove cells and their labels from sets before the row they are in is dropped.
+        for i in &self.row {
+            let mut set_id = 0;
+            if let Some(cell) = self.cells.remove(i) {
+                set_id = cell.set_id;
+            }
+
+            if set_id != 0 {
+                if let Some(set) = self.sets.get_mut(&set_id) {
+                    set.remove(i);
+                }
+            }
+        }
 
         self.row = new_row;
+        self.init_bottom_walls();
         &self.row
     }
 
