@@ -398,7 +398,7 @@ fn print_help() {
     println!("");
     println!("USAGE:");
     println!("      gen [width] [iterations]");
-    std::process::exit(1);
+    std::process::exit(0);
 }
 
 fn main() {
@@ -413,11 +413,13 @@ fn main() {
     let iterations = usize::from_str_radix(&args[2], 10).unwrap();
 
     let mut builder = MazeBuilder::new(width);
+    builder.print_row();
 
-    for _ in 0..iterations - 1 {
+    for _ in 0..iterations - 2 {
         builder.ellers();
         builder.print_row();
     }
+
     builder.end();
     builder.print_row();
 }
