@@ -157,7 +157,7 @@ impl MazeBuilder {
         }
 
         self.row = new_row;
-        self.init_bottom_walls();
+        self.generate_bottom_walls();
         &self.row
     }
 
@@ -264,12 +264,12 @@ impl MazeBuilder {
             .insert(Wall::Right);
 
         maze_bldr.init_vertical_walls();
-        maze_bldr.init_bottom_walls();
+        maze_bldr.generate_bottom_walls();
 
         maze_bldr
     }
 
-    fn init_bottom_walls(&mut self) {
+    fn generate_bottom_walls(&mut self) {
         for x in 1..self.width - 1 {
             if random() {
                 let label = self.row[x];

@@ -15,7 +15,8 @@ fn main() {
         print_help();
     }
     if args.len() != 3 {
-        println!("Error");
+        println!("Error with program arguments. See usage docs:");
+        print_help();
     }
     let width = usize::from_str_radix(&args[1], 10).unwrap();
     let iterations = usize::from_str_radix(&args[2], 10).unwrap();
