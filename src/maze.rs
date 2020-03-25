@@ -376,43 +376,52 @@ impl MazeBuilder {
         let mut ceil = String::new();
         let mut floor = String::new();
         let mut vertical = String::new();
+        let number_of_digits = get_number_of_digits(self.width, 10);
 
         for label in self.row.iter() {
             if let Some(cell) = self.cells.get(&label) {
                 if cell.walls.contains(&Wall::Top) {
                     ceil.push('-');
-                    ceil.push('-');
+                    (0..number_of_digits).for_each(|_| ceil.push('-'));
                     ceil.push('-');
                 } else {
                     ceil.push(' ');
-                    ceil.push(' ');
+                    (0..number_of_digits).for_each(|_| ceil.push(' '));
                     ceil.push(' ');
                 }
 
                 if cell.walls.contains(&Wall::Bottom) {
                     floor.push('-');
-                    floor.push('-');
+                    (0..number_of_digits).for_each(|_| floor.push('-'));
                     floor.push('-');
                 } else {
                     floor.push(' ');
-                    floor.push(' ');
+                    (0..number_of_digits).for_each(|_| floor.push(' '));
                     floor.push(' ');
                 }
 
                 if cell.walls.contains(&Wall::Left) && cell.walls.contains(&Wall::Right) {
                     vertical.push('|');
+                    let digit_count = get_number_of_digits(cell.set_id, 10);
+                    (0..(number_of_digits - digit_count)).for_each(|_| vertical.push(' '));
                     vertical.push_str(&cell.set_id.to_string());
                     vertical.push('|');
                 } else if cell.walls.contains(&Wall::Right) {
                     vertical.push(' ');
+                    let digit_count = get_number_of_digits(cell.set_id, 10);
+                    (0..(number_of_digits - digit_count)).for_each(|_| vertical.push(' '));
                     vertical.push_str(&cell.set_id.to_string());
                     vertical.push('|');
                 } else if cell.walls.contains(&Wall::Left) {
                     vertical.push('|');
+                    let digit_count = get_number_of_digits(cell.set_id, 10);
+                    (0..(number_of_digits - digit_count)).for_each(|_| vertical.push(' '));
                     vertical.push_str(&cell.set_id.to_string());
                     vertical.push(' ');
                 } else {
                     vertical.push(' ');
+                    let digit_count = get_number_of_digits(cell.set_id, 10);
+                    (0..(number_of_digits - digit_count)).for_each(|_| vertical.push(' '));
                     vertical.push_str(&cell.set_id.to_string());
                     vertical.push(' ');
                 }
@@ -427,6 +436,16 @@ impl MazeBuilder {
         println!("{}", vertical);
         println!("{}", floor);
     }
+}
+
+fn get_number_of_digits(num: usize, base: usize) -> usize {
+    let mut num = num;
+    let mut count = 0;
+    while num != 0 {
+        num = num / base;
+        count = count + 1;
+    }
+    return count;
 }
 
 #[cfg(test)]
