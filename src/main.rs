@@ -21,7 +21,7 @@ fn main() {
     let width = usize::from_str_radix(&args[1], 10).unwrap();
     let iterations = usize::from_str_radix(&args[2], 10).unwrap();
 
-    let mut builder = maze::MazeBuilder::new(width);
+    let mut builder = maze::MazeBuilder::new(width, iterations);
     builder.print_row();
 
     for _ in 0..iterations - 2 {

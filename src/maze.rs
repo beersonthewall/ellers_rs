@@ -63,6 +63,7 @@ pub struct MazeBuilder {
     set_cnt: usize,
     label_cnt: usize,
     row: Vec<usize>,
+    iterations: usize,
 }
 
 impl MazeBuilder {
@@ -253,7 +254,7 @@ impl MazeBuilder {
         }
     }
 
-    pub fn new(width: usize) -> MazeBuilder {
+    pub fn new(width: usize, iterations: usize) -> MazeBuilder {
         let mut maze_bldr = MazeBuilder {
             sets: HashMap::new(),
             cells: HashMap::new(),
@@ -261,6 +262,7 @@ impl MazeBuilder {
             set_cnt: 1,
             label_cnt: 0,
             row: Vec::new(),
+            iterations: iterations,
         };
 
         // Generate the initial row and put each cell into it's own set.
@@ -376,7 +378,7 @@ impl MazeBuilder {
         let mut ceil = String::new();
         let mut floor = String::new();
         let mut vertical = String::new();
-        let number_of_digits = get_number_of_digits(self.width, 10);
+        let number_of_digits = get_number_of_digits(self.width * self.iterations, 10);
 
         for label in self.row.iter() {
             if let Some(cell) = self.cells.get(&label) {
